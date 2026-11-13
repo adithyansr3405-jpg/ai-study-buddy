@@ -1,51 +1,65 @@
-# 🏛️ Project 10: AI Study Buddy (Notes to Quiz Studio)
+# ⚡ AI Study Buddy — Flagship Academic EdTech Platform
 
-> An executive-grade academic revision studio built with Streamlit and Google Gemini 3.5 Flash-Lite. Synthesizes lecture slides, textbook excerpts, and research notes into structured revision summaries, active-recall quizzes with explanations, and dictionary-style terminology glossaries.
+> **Powered by AdithyaInfotech** | Advanced Interactive Learning, Performance Analytics & Active-Recall Assessment Studio.  
+> Developed for **Project 10: AI Study Buddy (Notes to Quiz)**.
 
 ---
 
 ## 🌟 Executive Overview
 
-**AI Study Buddy** is a classic academic web application designed for students, researchers, and educators. It transforms dense lecture transcripts or multi-page academic PDF documents into structured study packages with interactive assessments, document page-range controls, and an appearance theme switcher.
+**AI Study Buddy** is a flagship academic EdTech platform built with **Streamlit**, **Plotly**, and **Google Gemini 3.5 Flash-Lite**. It transforms dense academic notes, textbooks, and multi-page PDFs into structured high-yield revision summaries, interactive multiple-choice assessments with real-time green/red visual grading, and dictionary-style terminology glossaries.
+
+The platform includes a **Performance Analytics Dashboard** that tracks student learning progression, subject mastery curves, and cumulative accuracy over time with full `.csv` and `.md` export capabilities.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Flagship Features
 
-- **⚡ High-Yield Revision Studio:** Generates a structured 3-part study curriculum:
-  1. **📌 Executive Summary:** 5–6 high-yield key takeaways and core principles.
-  2. **🎯 Assessment Quiz (5 MCQs):** 5 multiple-choice questions with collapsible "Answer & Explanation" reveal callouts.
-  3. **📖 Key Terminology Glossary:** 3 essential domain terms rendered as classic dictionary-style definition cards.
-- **🎨 Built-in Dual Theme Engine:**
-  - **Classic Ivory (Light Mode):** Warm alabaster/parchment background (`#F8F6F0`), crisp white cards with slate borders, and royal navy accents (`#1E3A8A`).
-  - **Executive Obsidian (Dark Mode):** Deep slate-navy background (`#0F172A`), elevated charcoal cards, and sky-blue accents (`#38BDF8`).
-- **📄 Advanced PDF Metrics & Page-Range Selection:**
-  - Detects total uploaded pages across PDF documents.
-  - Interactive **"Select Pages to Process"** slider to analyze specific page ranges.
-  - 3-Column Executive Metrics bar showing:
-    1. *Total Pages Uploaded*
-    2. *Pages Selected for Analysis*
-    3. *Estimated Word Count & Reading Time (at ~250 wpm)*
-- **🖥️ Dual View Perspectives:**
-  - **3-Column Report View:** Displays Summary, Quiz, and Glossary side-by-side for rapid one-screen reviewing and clean submission screenshots.
-  - **Tabbed Study View:** Full-width focused study tabs for in-depth revision.
-- **🔒 Zero UI Footprint for API Keys:**
-  - Completely hides API key inputs from the interface for clean presentations and screenshot submissions.
-  - Loads credentials silently from `.env` or Streamlit Cloud Secrets with an intelligent local study generation fallback.
-- **📥 Markdown Export:** One-click download button (`st.download_button`) to export your revision pack as `.md`.
+### 1. 🎯 Interactive Green/Red MCQ Assessment Engine
+- **Instant Visual Grading**:
+  - **Correct Answers**: Highlighted in vibrant **Emerald Green** with solution explanation (`✅ Correct Answer!`).
+  - **Incorrect Answers**: Highlighted in vibrant **Crimson Red** showing user's choice (`❌ Incorrect — Your Choice`), immediately followed by the **Correct Answer Reveal Box**.
+- **Screenshot Mode ("Show All Answers")**: One-click toggle revealing all evaluated states and explanations simultaneously for submission screenshots.
+- **Scorecard Recording**: Calculates accuracy % and score out of 5, logging every attempt persistently into the student's analytics history.
+
+### 2. 📊 Performance Analytics Dashboard (Plotly Reactive)
+- **4 Executive KPI Metrics**: Active Student Profile, Current Subject, Average Accuracy %, and Total Logged Attempts.
+- **Learning Progression Curve**: Theme-aware Plotly line/area chart visualizing score trends and accuracy percentages over sequential attempts.
+- **Subject-Wise Mastery Breakdown**: Interactive bar chart comparing student mastery across multiple academic disciplines.
+- **Cumulative Accuracy Ratio**: Precision donut chart displaying total correct vs. incorrect answers.
+- **Report Export**: One-click **"📥 Download Performance Report (.csv)"** for academic records.
+
+### 3. 👤 Student Profile & Subject Tracking
+- Editable **Student Username** (default: `Adithyan`) and **Subject/Course Name** selector with presets (*Machine Learning*, *Artificial Intelligence*, *Data Science*, *Computer Networks*) or custom entry.
+
+### 4. 🎨 Strict High-Contrast Adaptive Theme Engine
+- **Dark Mode (Obsidian Executive)**: Deep slate-obsidian canvas (`#0B0F19`), dark charcoal cards (`#161F30`), and crisp off-white typography (`#F8FAFC`).
+- **Light Mode (Classic Ivory)**: Warm parchment canvas (`#F8F6F0`), crisp white cards (`#FFFFFF`), and deep ink black typography (`#0F172A`).
+- Editorial serif headings (`Playfair Display` / `Georgia`) paired with clean modern body typography (`Inter`).
+
+### 5. 📄 Advanced PDF Metrics & Page-Range Extraction
+- Automatic detection of total uploaded PDF pages via `pypdf`.
+- Interactive page-range slider to extract and analyze specific chapters or sections.
+- 3-Column Executive Metrics bar tracking Total Pages, Selected Pages, Word Count, and Estimated Reading Time (~250 wpm).
+
+### 6. ⚡ Watermark & Branding
+- Persistent floating badge at bottom-right: `⚡ Powered by AdithyaInfotech`.
+- Classic footer banner across all application views and in all exported reports.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend & App Framework:** [Streamlit](https://streamlit.io/)
-- **LLM Engine:** Google Gemini 3.5 Flash-Lite via the official [`google-genai`](https://pypi.org/project/google-genai/) SDK
+- **Application Framework:** [Streamlit](https://streamlit.io/)
+- **Visual Analytics:** [Plotly Graph Objects](https://plotly.com/python/)
+- **Data Engineering:** Python CSV & Pandas DataFrames
+- **AI Synthesis Engine:** Google Gemini 3.5 Flash-Lite via the official [`google-genai`](https://pypi.org/project/google-genai/) SDK
 - **PDF Extraction:** [`pypdf`](https://pypi.org/project/pypdf/)
 - **Environment Management:** [`python-dotenv`](https://pypi.org/project/python-dotenv/)
 
 ---
 
-## 📦 Installation & Local Setup
+## 📦 Local Installation & Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -63,39 +77,28 @@ Create a `.env` file in the root directory:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
-*(The application automatically detects the key silently without exposing it on screen).*
+*(The platform loads credentials silently with zero UI exposure and automatically activates an intelligent study generation engine if no key is present).*
 
-### 4. Run the Application
+### 4. Run the Platform
 ```bash
 streamlit run app.py
 ```
-Open your browser at `http://localhost:8501`.
+Access the application in your browser at `http://localhost:8501`.
 
 ---
 
-## 🎯 Usage Guide
+## 🎯 Quick Demonstration Flow (For Evaluation & Screenshots)
 
-1. **Select Theme:** Toggle between **Classic Ivory** and **Executive Obsidian** in the sidebar.
-2. **Select Input Method:**
-   - Click **"📖 Load Sample Notes (ML)"** for an instant 1-click test with ~300 words on Machine Learning Fundamentals, OR
-   - Paste custom lecture notes or transcripts into the text area, OR
-   - Upload a multi-page PDF document and adjust the page range slider.
-3. **Synthesize:** Click **"🚀 Generate Revision Pack"**.
-4. **Interact & Review:**
-   - Switch between **3-Column Report** and **Tabbed Study** views.
-   - Expand the **💡 View Answer & Explanation** callouts under each MCQ question.
-   - Click **"📥 Download (.md)"** to save your revision pack.
+1. Open the app in your browser ([http://localhost:8501](http://localhost:8501) or live public tunnel).
+2. Click **"📖 Load Sample Notes (ML)"** in the sidebar.
+3. Click **"🚀 Generate Revision Pack"** in the **Revision Studio** tab.
+4. Interact with the **Assessment Quiz**:
+   - Check answers using **"🏁 Check Answers & Record Score"** to see vibrant green and red evaluation boxes.
+   - Or toggle **"📸 Show All Answers (Screenshot Mode)"** to display all 5 graded questions on screen at once.
+5. Switch to the **"📊 Performance Dashboard"** tab to view the executive KPIs, progression curve, subject mastery bar chart, donut ratio, and recorded history table.
+6. Click **"📥 Download (.md)"** or **"📥 Download Performance Report (.csv)"** to export your study materials.
 
 ---
 
-## ☁️ Deployment to Streamlit Cloud
-
-1. Push this repository to GitHub.
-2. Visit [share.streamlit.io](https://share.streamlit.io/).
-3. Connect your repository, set `app.py` as the main module, and add `GEMINI_API_KEY` under **Advanced Settings > Secrets**.
-4. Click **Deploy**!
-
----
-
-## 📄 License
-MIT License. Built for academic learning and revision.
+## 📄 License & Attribution
+MIT License • Built by **Adithyan** • Powered by **AdithyaInfotech**.
