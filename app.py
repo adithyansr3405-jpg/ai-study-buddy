@@ -7,7 +7,6 @@ from datetime import datetime
 import streamlit as st
 from dotenv import load_dotenv
 from pypdf import PdfReader
-import plotly.graph_objects as go
 from google import genai
 from google.genai import types
 
@@ -149,7 +148,7 @@ with st.sidebar:
     <div style="font-size: 0.82rem; line-height: 1.6;">
         <div>{status_icon} <b>Engine:</b> Gemini 3.5 Flash-Lite</div>
         <div>📄 <b>Parser:</b> PDF Engine v7.0</div>
-        <div>📊 <b>Analytics:</b> Plotly Reactive v7.1</div>
+        <div>📊 <b>Analytics:</b> Native SVG/HTML Reactive</div>
         <div>🔒 <b>Security:</b> Credential Zero-Leak</div>
     </div>
     """, unsafe_allow_html=True)
@@ -176,10 +175,6 @@ def get_high_contrast_css(dark: bool) -> str:
         /* Text element overrides */
         p, span, div, h1, h2, h3, h4, h5, h6, li, label, .stMarkdown, .stRadio, .stSelectbox {
             color: #F8FAFC !important;
-        }
-
-        .secondary-text {
-            color: #CBD5E1 !important;
         }
 
         [data-testid="stSidebar"] {
@@ -340,10 +335,6 @@ def get_high_contrast_css(dark: bool) -> str:
         /* Text element overrides */
         p, span, div, h1, h2, h3, h4, h5, h6, li, label, .stMarkdown, .stRadio, .stSelectbox {
             color: #0F172A !important;
-        }
-
-        .secondary-text {
-            color: #334155 !important;
         }
 
         [data-testid="stSidebar"] {
@@ -627,6 +618,230 @@ def export_pack_to_markdown(pack: dict, username: str, subject: str) -> str:
     md += "\n---\n*⚡ Powered by AdithyaInfotech | AI Study Buddy Flagship Platform*\n"
     return md
 
+# --- NATIVE SVG & HTML VISUALIZATION ENGINES (Zero Pandas / Plotly Dependencies) ---
+
+def render_svg_progression_chart(history: list, dark: bool) -> str:
+    """Renders a sleek, responsive, theme-aware inline SVG bar and trend line chart."""
+    if not history:
+        return "<p style='padding: 10px;'>No assessment attempts recorded yet.</p>"
+    
+    w, h = 720, 240
+    pad_left, pad_right, pad_top, pad_bottom = 60, 40, 30, 40
+    plot_w = w - pad_left - pad_right
+    plot_h = h - pad_top - pad_bottom
+    n = len(history)
+
+    bg_color = "#161F30" if dark else "#FFFFFF"
+    border_color = "#2A374D" if dark else "#E2E8F0"
+    grid_color = "#223147" if dark else "#F1F5F9"
+    text_color = "#94A3B8" if dark else "#64748B"
+    line_color = "#38BDF8" if dark else "#1E3A8A"
+    area_color = "rgba(56, 189, 248, 0.16)" if dark else "rgba(30, 58, 138, 0.12)"
+    bar_grad_start = "#0284C7" if dark else "#1E3A8A"
+    bar_grad_end = "#38BDF8" if dark else "#3B82F6"
+    val_text_color = "#F8FAFC" if dark else "#0F172A"
+
+    points = []
+    bars_svg = []
+    
+    for i, item in enumerate(history):
+        x = pad_left + (i * plot_w / (n - 1 if n > 1 else 1)) if n > 1 else pad_left + plot_w / 2
+        acc = float(item.get("Accuracy (%)", 0.0))
+        y = pad_top + plot_h * (1.0 - (acc / 100.0))
+        points.append((x, y, acc, item.get("Attempt", i + 1)))
+        
+        bar_w = min(42, plot_w / (n * 1.6))
+        bar_x = x - (bar_w / 2)
+        bar_y = y
+        bar_height = (pad_top + plot_h) - y
+        bars_svg.append(f"""
+        <rect x="{bar_x:.1f}" y="{bar_y:.1f}" width="{bar_w:.1f}" height="{bar_height:.1f}" rx="5" 
+              fill="url(#progBarGrad)" opacity="0.85" />
+        """)
+
+    # Gridlines (0%, 25%, 50%, 75%, 100%)
+    grid_svg = []
+    for pct in [0, 25, 50, 75, 100]:
+        gy = pad_top + plot_h * (1.0 - pct / 100.0)
+        grid_svg.append(f"""
+        <line x1="{pad_left}" y1="{gy:.1f}" x2="{w - pad_right}" y2="{gy:.1f}" stroke="{grid_color}" stroke-width="1" stroke-dasharray="3,3" />
+        <text x="{pad_left - 10}" y="{gy + 4:.1f}" fill="{text_color}" font-size="11" font-family="Inter, sans-serif" text-anchor="end">{pct}%</text>
+        """)
+
+    path_d = "M " + " L ".join([f"{p[0]:.1f} {p[1]:.1f}" for p in points])
+    area_d = f"{path_d} L {points[-1][0]:.1f} {pad_top + plot_h} L {points[0][0]:.1f} {pad_top + plot_h} Z"
+
+    markers_svg = []
+    for x, y, acc, att in points:
+        markers_svg.append(f"""
+        <circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="#10B981" stroke="{bg_color}" stroke-width="2.5" />
+        <rect x="{x - 22:.1f}" y="{y - 25:.1f}" width="44" height="18" rx="4" fill="{bg_color}" stroke="{line_color}" stroke-width="1.2" />
+        <text x="{x:.1f}" y="{y - 12:.1f}" fill="{val_text_color}" font-size="10.5" font-weight="700" font-family="Inter, sans-serif" text-anchor="middle">{acc:.0f}%</text>
+        <text x="{x:.1f}" y="{pad_top + plot_h + 20}" fill="{text_color}" font-size="11" font-weight="600" font-family="Inter, sans-serif" text-anchor="middle">Att. {att}</text>
+        """)
+
+    return f"""
+    <div style="background-color: {bg_color}; border: 1px solid {border_color}; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; font-weight: 700; color: {val_text_color};">
+                📈 Learning Progression Curve (Accuracy % over Attempts)
+            </div>
+            <div style="font-size: 0.78rem; color: #10B981; font-weight: 700; background: rgba(16,185,129,0.12); padding: 4px 10px; border-radius: 12px;">
+                ● Live Student Trend
+            </div>
+        </div>
+        <svg viewBox="0 0 {w} {h}" style="width: 100%; height: auto; display: block;" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="progBarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="{bar_grad_start}" />
+                    <stop offset="100%" stop-color="{bar_grad_end}" stop-opacity="0.3" />
+                </linearGradient>
+            </defs>
+            {''.join(grid_svg)}
+            {''.join(bars_svg)}
+            <path d="{area_d}" fill="{area_color}" />
+            <path d="{path_d}" fill="none" stroke="{line_color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            {''.join(markers_svg)}
+        </svg>
+    </div>
+    """
+
+def render_svg_donut_and_subject_breakdown(history: list, dark: bool) -> str:
+    """Renders the SVG Donut chart (Correct vs Wrong) and Subject Mastery Progress bars side-by-side."""
+    bg_color = "#161F30" if dark else "#FFFFFF"
+    border_color = "#2A374D" if dark else "#E2E8F0"
+    text_color = "#94A3B8" if dark else "#64748B"
+    title_color = "#F8FAFC" if dark else "#0F172A"
+    track_color = "#223147" if dark else "#E2E8F0"
+
+    total_correct = sum(h.get("Correct_Count", 0) for h in history)
+    total_wrong = sum(h.get("Wrong_Count", 0) for h in history)
+    total_answered = total_correct + total_wrong
+    acc_pct = (total_correct / total_answered * 100.0) if total_answered > 0 else 0.0
+
+    circ = 301.59
+    green_dash = (acc_pct / 100.0) * circ
+
+    donut_svg = f"""
+    <svg viewBox="0 0 160 160" style="width: 150px; height: 150px; display: block; margin: 0 auto;" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="80" cy="80" r="48" fill="none" stroke="#EF4444" stroke-width="18" opacity="0.85" />
+        <circle cx="80" cy="80" r="48" fill="none" stroke="#10B981" stroke-width="18"
+                stroke-dasharray="{green_dash:.2f} {circ:.2f}"
+                transform="rotate(-90 80 80)"
+                stroke-linecap="round" />
+        <text x="80" y="76" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="700" fill="{title_color}" text-anchor="middle">{acc_pct:.0f}%</text>
+        <text x="80" y="94" font-family="Inter, sans-serif" font-size="10.5" font-weight="600" fill="{text_color}" text-anchor="middle">ACCURACY</text>
+    </svg>
+    """
+
+    sub_scores = {}
+    for h in history:
+        s = h.get("Subject", "General")
+        if s not in sub_scores:
+            sub_scores[s] = []
+        sub_scores[s].append(float(h.get("Accuracy (%)", 0.0)))
+
+    palette = ["#38BDF8", "#10B981", "#F59E0B", "#A855F7"] if dark else ["#1E3A8A", "#10B981", "#D97706", "#7C3AED"]
+    subject_bars_html = []
+
+    for idx, (sub, scores) in enumerate(sub_scores.items()):
+        avg_s = sum(scores) / len(scores)
+        bar_col = palette[idx % len(palette)]
+        subject_bars_html.append(f"""
+        <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; margin-bottom: 5px;">
+                <span style="color: {title_color};">{sub}</span>
+                <span style="color: {bar_col}; font-weight: 700;">{avg_s:.1f}%</span>
+            </div>
+            <div style="background-color: {track_color}; border-radius: 6px; height: 9px; width: 100%; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, {bar_col}, {bar_col}CC); width: {min(100.0, avg_s):.1f}%; height: 100%; border-radius: 6px;"></div>
+            </div>
+        </div>
+        """)
+
+    return f"""
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px;">
+        <div style="background-color: {bg_color}; border: 1px solid {border_color}; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.12rem; font-weight: 700; color: {title_color}; margin-bottom: 14px;">
+                📘 Subject-Wise Mastery Breakdown
+            </div>
+            {''.join(subject_bars_html)}
+        </div>
+        
+        <div style="background-color: {bg_color}; border: 1px solid {border_color}; border-radius: 10px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.12rem; font-weight: 700; color: {title_color}; margin-bottom: 10px; text-align: center;">
+                🎯 Cumulative Accuracy Ratio (Right vs. Wrong)
+            </div>
+            {donut_svg}
+            <div style="display: flex; justify-content: center; gap: 24px; margin-top: 12px; font-size: 0.86rem; font-weight: 600;">
+                <div style="color: #10B981;">● Correct: {total_correct} ({acc_pct:.1f}%)</div>
+                <div style="color: #EF4444;">● Incorrect: {total_wrong} ({100.0 - acc_pct:.1f}%)</div>
+            </div>
+        </div>
+    </div>
+    """
+
+def render_html_history_table(history: list, dark: bool) -> str:
+    """Renders a styled, responsive HTML table for assessment history without pandas."""
+    if not history:
+        return "<p style='padding: 10px;'>No attempts recorded yet.</p>"
+
+    bg_color = "#161F30" if dark else "#FFFFFF"
+    header_bg = "#1A2438" if dark else "#F1EFEA"
+    row_alt_bg = "#121A29" if dark else "#F8FAFC"
+    border_color = "#2A374D" if dark else "#E2E8F0"
+    cell_border = "#24334A" if dark else "#E2E8F0"
+    title_color = "#F8FAFC" if dark else "#0F172A"
+    th_color = "#38BDF8" if dark else "#1E3A8A"
+
+    rows_html = []
+    for idx, h in enumerate(history):
+        r_bg = bg_color if idx % 2 == 0 else row_alt_bg
+        acc = float(h.get("Accuracy (%)", 0.0))
+        badge_bg = "rgba(16, 185, 129, 0.18)" if acc >= 80 else ("rgba(245, 158, 11, 0.18)" if acc >= 60 else "rgba(239, 68, 68, 0.18)")
+        badge_fg = "#10B981" if acc >= 80 else ("#F59E0B" if acc >= 60 else "#EF4444")
+        
+        rows_html.append(f"""
+        <tr style="background-color: {r_bg}; border-bottom: 1px solid {cell_border};">
+            <td style="padding: 11px 14px; font-weight: 600; color: {title_color};">Att. {h.get('Attempt', idx + 1)}</td>
+            <td style="padding: 11px 14px; color: {'#CBD5E1' if dark else '#475569'};">{h.get('Timestamp', '')}</td>
+            <td style="padding: 11px 14px; color: {title_color};">{h.get('Username', '')}</td>
+            <td style="padding: 11px 14px; color: {title_color};"><b>{h.get('Subject', '')}</b></td>
+            <td style="padding: 11px 14px; text-align: center;">
+                <span style="background: {badge_bg}; color: {badge_fg} !important; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 0.84rem;">
+                    {h.get('Score', 0)} / 5
+                </span>
+            </td>
+            <td style="padding: 11px 14px; text-align: center; font-weight: 700; color: {badge_fg} !important;">
+                {acc:.0f}%
+            </td>
+            <td style="padding: 11px 14px; text-align: center; color: {'#CBD5E1' if dark else '#475569'};">
+                {h.get('Pages_Analyzed', 1)} Page(s)
+            </td>
+        </tr>
+        """)
+
+    return f"""
+    <div style="border: 1px solid {border_color}; border-radius: 10px; overflow: hidden; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <table style="width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 0.88rem;">
+            <thead>
+                <tr style="background-color: {header_bg}; border-bottom: 2px solid {border_color}; text-align: left;">
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase;">Attempt</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase;">Timestamp</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase;">Student</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase;">Subject</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; text-align: center;">Score</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; text-align: center;">Accuracy</th>
+                    <th style="padding: 11px 14px; color: {th_color} !important; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; text-align: center;">Pages Analyzed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(rows_html)}
+            </tbody>
+        </table>
+    </div>
+    """
+
 # --- HEADER SECTION ---
 col_head1, col_head2 = st.columns([3.5, 1.5])
 with col_head1:
@@ -656,7 +871,6 @@ nav_tabs = st.tabs([
 # TAB 1: REVISION STUDIO
 # ==========================================
 with nav_tabs[0]:
-    # Input selection
     input_mode = st.radio(
         "Select Input Source:",
         options=["Paste Notes / Text", "Upload PDF Document"],
@@ -712,7 +926,6 @@ with nav_tabs[0]:
                     word_count = len(pdf_content.split()) if pdf_content else 0
                     est_reading_time = max(1, round(word_count / 250)) if word_count > 0 else 0
 
-                    # 3-Column Executive Metrics Bar
                     m1, m2, m3 = st.columns(3)
                     with m1:
                         st.markdown(f"""
@@ -743,7 +956,6 @@ with nav_tabs[0]:
             except Exception as e:
                 st.error(f"Error parsing PDF: {e}")
 
-    # Generate Button
     st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
     generate_clicked = st.button(
         "🚀 Generate Revision Pack",
@@ -861,10 +1073,8 @@ Return ONLY a JSON object formatted exactly as:
                 
                 st.markdown(f"**Q{qid}: {q['question']}**")
                 
-                # Default selection
                 default_idx = None
                 if screenshot_mode:
-                    # In screenshot mode, simulate user choices (Q1, Q2, Q4, Q5 correct, Q3 wrong)
                     desired_opt = q["correct_option"] if qid != 3 else ("A" if q["correct_option"] != "A" else "C")
                     for idx, opt_str in enumerate(opts):
                         if opt_str.startswith(f"{desired_opt})"):
@@ -909,18 +1119,15 @@ Return ONLY a JSON object formatted exactly as:
 
             return score, user_selections
 
-        # Screenshot Mode Toggle & Grade Button
         sub_col1, sub_col2 = st.columns([1.5, 1])
         with sub_col1:
             check_answers_btn = st.button("🏁 Check Answers & Record Score", type="primary", use_container_width=True)
         with sub_col2:
             screenshot_mode = st.checkbox("📸 Show All Answers (Screenshot Mode)", value=False)
 
-        # Process Submission
         if check_answers_btn:
             st.session_state["user_quiz_graded"] = True
             
-            # Compute score from session radio keys
             final_score = 0
             for q in pack["mcqs"]:
                 selected_val = st.session_state.get(f"mcq_radio_{q['id']}", "")
@@ -929,7 +1136,6 @@ Return ONLY a JSON object formatted exactly as:
             
             acc = (final_score / 5.0) * 100.0
             
-            # Record in persistent history
             new_record = {
                 "Attempt": len(st.session_state["quiz_history"]) + 1,
                 "Username": st.session_state["student_username"],
@@ -950,7 +1156,6 @@ Return ONLY a JSON object formatted exactly as:
             else:
                 st.toast(f"Score: {final_score}/5 ({acc:.0f}%) recorded in Dashboard!", icon="📊")
 
-        # RENDER PERSPECTIVE VIEWS
         if view_perspective == "3-Column Report View":
             col_sum, col_quiz, col_term = st.columns([1, 1.35, 1])
             
@@ -1002,13 +1207,11 @@ with nav_tabs[1]:
     history = st.session_state["quiz_history"]
     
     st.markdown(f"### 📊 Student Analytics Dashboard — {st.session_state['student_username']}")
-    st.caption("Live assessment progression tracking, subject mastery, and accuracy distribution powered by Plotly.")
+    st.caption("Live assessment progression tracking, subject mastery, and accuracy distribution (Native SVG/HTML Reactive).")
 
     # 4 Executive KPI Metric Cards
     total_quizzes = len(history)
     avg_accuracy = sum(h["Accuracy (%)"] for h in history) / total_quizzes if total_quizzes > 0 else 0.0
-    total_correct = sum(h["Correct_Count"] for h in history)
-    total_wrong = sum(h["Wrong_Count"] for h in history)
 
     k1, k2, k3, k4 = st.columns(4)
     with k1:
@@ -1040,97 +1243,22 @@ with nav_tabs[1]:
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 0.8rem;'></div>", unsafe_allow_html=True)
 
-    # GRAPH 1: Learning Progression Line / Area Chart
-    attempt_labels = [f"Attempt {h['Attempt']}" for h in history]
-    accuracies = [h["Accuracy (%)"] for h in history]
-    scores = [h["Score"] for h in history]
+    # CHART 1: Native SVG Learning Progression Curve
+    prog_svg_html = render_svg_progression_chart(history, is_dark)
+    st.markdown(prog_svg_html, unsafe_allow_html=True)
 
-    fig_progression = go.Figure()
-    fig_progression.add_trace(go.Scatter(
-        x=attempt_labels,
-        y=accuracies,
-        mode="lines+markers+text",
-        name="Accuracy (%)",
-        text=[f"{acc:.0f}%" for acc in accuracies],
-        textposition="top center",
-        line=dict(color="#38BDF8" if is_dark else "#1E3A8A", width=3),
-        marker=dict(size=10, color="#10B981", line=dict(width=2, color="#FFFFFF")),
-        fill="tozeroy",
-        fillcolor="rgba(56, 189, 248, 0.15)" if is_dark else "rgba(30, 58, 138, 0.12)"
-    ))
+    # CHART 2: Native SVG Donut Chart + Subject Mastery Breakdown
+    donut_and_sub_html = render_svg_donut_and_subject_breakdown(history, is_dark)
+    st.markdown(donut_and_sub_html, unsafe_allow_html=True)
 
-    fig_progression.update_layout(
-        title="📈 Performance Progression Curve (Accuracy % over Attempts)",
-        paper_bgcolor="#161F30" if is_dark else "#FFFFFF",
-        plot_bgcolor="#161F30" if is_dark else "#FFFFFF",
-        font=dict(color="#F8FAFC" if is_dark else "#0F172A", family="Inter"),
-        yaxis=dict(range=[0, 115], title="Accuracy (%)", gridcolor="#2A374D" if is_dark else "#E2E8F0"),
-        xaxis=dict(gridcolor="#2A374D" if is_dark else "#E2E8F0"),
-        margin=dict(l=40, r=30, t=55, b=40),
-        height=320
-    )
-    st.plotly_chart(fig_progression, use_container_width=True)
-
-    # GRAPH 2: Side-by-Side Subject Breakdown & Donut Chart
-    g_col1, g_col2 = st.columns(2)
-
-    with g_col1:
-        # Subject Mastery Bar Chart
-        sub_map = {}
-        for h in history:
-            s = h["Subject"]
-            if s not in sub_map:
-                sub_map[s] = []
-            sub_map[s].append(h["Accuracy (%)"])
-        
-        subjects = list(sub_map.keys())
-        sub_averages = [sum(scores)/len(scores) for scores in sub_map.values()]
-
-        fig_bar = go.Figure(data=[go.Bar(
-            x=subjects,
-            y=sub_averages,
-            marker=dict(color=["#38BDF8" if is_dark else "#1E3A8A", "#10B981", "#F59E0B", "#8B5CF6"][:len(subjects)]),
-            text=[f"{v:.1f}%" for v in sub_averages],
-            textposition="outside"
-        )])
-        fig_bar.update_layout(
-            title="📘 Subject-Wise Mastery Breakdown",
-            paper_bgcolor="#161F30" if is_dark else "#FFFFFF",
-            plot_bgcolor="#161F30" if is_dark else "#FFFFFF",
-            font=dict(color="#F8FAFC" if is_dark else "#0F172A", family="Inter"),
-            yaxis=dict(range=[0, 120], title="Avg Accuracy (%)", gridcolor="#2A374D" if is_dark else "#E2E8F0"),
-            xaxis=dict(gridcolor="#2A374D" if is_dark else "#E2E8F0"),
-            margin=dict(l=40, r=30, t=55, b=40),
-            height=300
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-    with g_col2:
-        # Donut Chart for Correct vs. Incorrect
-        fig_donut = go.Figure(data=[go.Pie(
-            labels=["Correct Answers", "Incorrect Answers"],
-            values=[total_correct, total_wrong],
-            hole=0.55,
-            marker=dict(colors=["#10B981", "#EF4444"]),
-            textinfo="label+percent"
-        )])
-        fig_donut.update_layout(
-            title="🎯 Cumulative Accuracy Ratio (Right vs. Wrong)",
-            paper_bgcolor="#161F30" if is_dark else "#FFFFFF",
-            plot_bgcolor="#161F30" if is_dark else "#FFFFFF",
-            font=dict(color="#F8FAFC" if is_dark else "#0F172A", family="Inter"),
-            margin=dict(l=20, r=20, t=55, b=30),
-            height=300,
-            showlegend=False
-        )
-        st.plotly_chart(fig_donut, use_container_width=True)
-
-    # Recorded History Table & CSV Download
+    # STATS HISTORY TABLE (Custom Styled HTML without Pandas/Plotly)
     st.markdown("#### 📜 Recorded Assessment History")
-    
-    # Generate CSV in-memory
+    table_html = render_html_history_table(history, is_dark)
+    st.markdown(table_html, unsafe_allow_html=True)
+
+    # CSV Download using built-in csv and io.StringIO
     csv_buffer = io.StringIO()
     if history:
         writer = csv.DictWriter(csv_buffer, fieldnames=list(history[0].keys()))
@@ -1138,9 +1266,7 @@ with nav_tabs[1]:
         writer.writerows(history)
     csv_content = csv_buffer.getvalue()
 
-    # Display clean table
-    st.table(history)
-
+    st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
     st.download_button(
         label="📥 Download Performance Report (.csv)",
         data=csv_content,

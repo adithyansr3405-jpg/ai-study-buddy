@@ -51,8 +51,8 @@ The platform includes a **Performance Analytics Dashboard** that tracks student 
 ## 🛠️ Tech Stack
 
 - **Application Framework:** [Streamlit](https://streamlit.io/)
-- **Visual Analytics:** [Plotly Graph Objects](https://plotly.com/python/)
-- **Data Engineering:** Python CSV & Pandas DataFrames
+- **Visual Analytics:** Native Theme-Aware SVG & HTML Visualizations (Zero-Dependency & Fully Portable)
+- **Data Engineering:** Python Standard Library (`csv`, `io`, `json`)
 - **AI Synthesis Engine:** Google Gemini 3.5 Flash-Lite via the official [`google-genai`](https://pypi.org/project/google-genai/) SDK
 - **PDF Extraction:** [`pypdf`](https://pypi.org/project/pypdf/)
 - **Environment Management:** [`python-dotenv`](https://pypi.org/project/python-dotenv/)
