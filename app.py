@@ -82,29 +82,31 @@ if "quiz_history" not in st.session_state:
         }
     ]
 
-# --- HTML / SVG RENDERING UTILITY (Code-Block Indentation Immune) ---
+# --- HTML / SVG RENDERING UTILITY (Zero Code-Block Indentation) ---
 def clean_html_str(raw: str) -> str:
     """Strips leading whitespace and blank lines to prevent Markdown code-block escaping bugs."""
     if not raw:
         return ""
-    return "\n".join(line.lstrip() for line in raw.splitlines() if line.strip())
+    return "\n".join(line.strip() for line in str(raw).splitlines() if line.strip())
 
-def render_clean_html(raw_html: str):
+def render_html(raw_html: str):
     """
     Renders custom HTML/SVG safely without Markdown code-block escaping.
     Strips leading indentation and blank lines, then renders using st.html (or st.markdown fallback).
     """
     if not raw_html:
         return
-    clean_html = clean_html_str(raw_html)
+    cleaned = clean_html_str(raw_html)
     if hasattr(st, "html"):
-        st.html(clean_html)
+        st.html(cleaned)
     else:
-        st.markdown(clean_html, unsafe_allow_html=True)
+        st.markdown(cleaned, unsafe_allow_html=True)
+
+render_clean_html = render_html
 
 # --- SIDEBAR: STUDENT PROFILE & CONTROLS ---
 with st.sidebar:
-    render_clean_html("""
+    render_html("""
     <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem;">
         <span style="font-size: 1.85rem;">⚡</span>
         <div>
@@ -164,7 +166,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("#### 🛡️ System Telemetry")
     status_icon = "🟢" if is_dark else "🔷"
-    render_clean_html(f"""
+    render_html(f"""
     <div style="font-size: 0.82rem; line-height: 1.6;">
         <div>{status_icon} <b>Engine:</b> Gemini 3.5 Flash-Lite</div>
         <div>📄 <b>Parser:</b> PDF Engine v7.0</div>
@@ -495,10 +497,10 @@ def get_high_contrast_css(dark: bool) -> str:
         </style>
         """
 
-render_clean_html(get_high_contrast_css(is_dark))
+render_html(get_high_contrast_css(is_dark))
 
 # Render Fixed Watermark Badge
-render_clean_html("""
+render_html("""
 <div class="adithya-watermark">
     <span>⚡ Powered by <b>AdithyaInfotech</b></span>
 </div>
@@ -862,13 +864,13 @@ def render_html_history_table(history: list, dark: bool) -> str:
 # --- HEADER SECTION ---
 col_head1, col_head2 = st.columns([3.5, 1.5])
 with col_head1:
-    render_clean_html('<div class="brand-badge">⚡ AdithyaInfotech Flagship EdTech</div>')
-    render_clean_html('<div class="main-title">AI Study Buddy: Academic Studio 📚</div>')
-    render_clean_html(
+    render_html('<div class="brand-badge">⚡ AdithyaInfotech Flagship EdTech</div>')
+    render_html('<div class="main-title">AI Study Buddy: Academic Studio 📚</div>')
+    render_html(
         f'<div class="main-subtitle">Synthesizing study materials for <b>{st.session_state["student_username"]}</b> • Subject: <span style="color: #38BDF8; font-weight: 600;">{st.session_state["course_name"]}</span></div>'
     )
 with col_head2:
-    render_clean_html("""
+    render_html("""
     <div style="text-align: right; margin-top: 0.5rem;">
         <span style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); padding: 5px 12px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3);">
             Student: Adithyan • ID: AI-2026
@@ -944,21 +946,21 @@ with nav_tabs[0]:
 
                     m1, m2, m3 = st.columns(3)
                     with m1:
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div class="kpi-card">
                             <div class="kpi-value">{total_pages} Pages</div>
                             <div class="kpi-label">Total Pages Detected</div>
                         </div>
                         """)
                     with m2:
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div class="kpi-card">
                             <div class="kpi-value">{selected_count} / {total_pages}</div>
                             <div class="kpi-label">Pages Selected for Analysis</div>
                         </div>
                         """)
                     with m3:
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div class="kpi-card">
                             <div class="kpi-value">~{word_count:,} Words</div>
                             <div class="kpi-label">Est. Read Time (~{est_reading_time} min)</div>
@@ -972,7 +974,7 @@ with nav_tabs[0]:
             except Exception as e:
                 st.error(f"Error parsing PDF: {e}")
 
-    render_clean_html("<div style='height: 0.3rem;'></div>")
+    render_html("<div style='height: 0.3rem;'></div>")
     generate_clicked = st.button(
         "🚀 Generate Revision Pack",
         type="primary",
@@ -1114,14 +1116,14 @@ Return ONLY a JSON object formatted exactly as:
                 # Visual Feedback Rendering (Green for Correct, Red for Wrong)
                 if st.session_state["user_quiz_graded"] or screenshot_mode:
                     if is_correct:
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div style="background-color: rgba(16, 185, 129, 0.18); border-left: 6px solid #10B981; padding: 10px 14px; border-radius: 6px; margin: 6px 0 14px 0;">
                             <div style="color: #10B981 !important; font-weight: 700; font-size: 0.95rem;">✅ Correct Answer! (Option {q['correct_option']})</div>
                             <div style="font-size: 0.88rem; margin-top: 4px; line-height: 1.45; color: {'#E2E8F0' if is_dark else '#1E293B'} !important;">{q['explanation']}</div>
                         </div>
                         """)
                     else:
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div style="background-color: rgba(239, 68, 68, 0.18); border-left: 6px solid #EF4444; padding: 10px 14px; border-radius: 6px; margin: 6px 0 4px 0;">
                             <div style="color: #EF4444 !important; font-weight: 700; font-size: 0.95rem;">❌ Incorrect — Your Choice: Option {chosen_letter or 'None'}</div>
                         </div>
@@ -1131,7 +1133,7 @@ Return ONLY a JSON object formatted exactly as:
                         </div>
                         """)
                 else:
-                    render_clean_html("<div style='height: 0.6rem;'></div>")
+                    render_html("<div style='height: 0.6rem;'></div>")
 
             return score, user_selections
 
@@ -1189,7 +1191,7 @@ Return ONLY a JSON object formatted exactly as:
                 with st.container(border=True):
                     st.markdown("#### 📖 Key Terminology Glossary")
                     for t in pack.get("key_terms", []):
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div class="glossary-card">
                             <div class="glossary-term">📖 {t['term']}</div>
                             <div class="glossary-def">{t['definition']}</div>
@@ -1209,7 +1211,7 @@ Return ONLY a JSON object formatted exactly as:
                 with st.container(border=True):
                     st.markdown("#### 📖 Key Terminology Glossary")
                     for t in pack.get("key_terms", []):
-                        render_clean_html(f"""
+                        render_html(f"""
                         <div class="glossary-card">
                             <div class="glossary-term">📖 {t['term']}</div>
                             <div class="glossary-def">{t['definition']}</div>
@@ -1231,48 +1233,48 @@ with nav_tabs[1]:
 
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        render_clean_html(f"""
+        render_html(f"""
         <div class="kpi-card">
             <div class="kpi-value">{st.session_state['student_username']}</div>
             <div class="kpi-label">Active Student</div>
         </div>
         """)
     with k2:
-        render_clean_html(f"""
+        render_html(f"""
         <div class="kpi-card">
             <div class="kpi-value">{st.session_state['course_name']}</div>
             <div class="kpi-label">Active Subject / Course</div>
         </div>
         """)
     with k3:
-        render_clean_html(f"""
+        render_html(f"""
         <div class="kpi-card">
             <div class="kpi-value">{avg_accuracy:.1f}%</div>
             <div class="kpi-label">Average Quiz Accuracy</div>
         </div>
         """)
     with k4:
-        render_clean_html(f"""
+        render_html(f"""
         <div class="kpi-card">
             <div class="kpi-value">{total_quizzes} Quizzes</div>
             <div class="kpi-label">Total Attempts Logged</div>
         </div>
         """)
 
-    render_clean_html("<div style='height: 0.8rem;'></div>")
+    render_html("<div style='height: 0.8rem;'></div>")
 
     # CHART 1: Native SVG Learning Progression Curve
     prog_svg_html = render_svg_progression_chart(history, is_dark)
-    render_clean_html(prog_svg_html)
+    render_html(prog_svg_html)
 
     # CHART 2: Native SVG Donut Chart + Subject Mastery Breakdown
     donut_and_sub_html = render_svg_donut_and_subject_breakdown(history, is_dark)
-    render_clean_html(donut_and_sub_html)
+    render_html(donut_and_sub_html)
 
     # STATS HISTORY TABLE (Custom Styled HTML without Pandas/Plotly)
     st.markdown("#### 📜 Recorded Assessment History")
     table_html = render_html_history_table(history, is_dark)
-    render_clean_html(table_html)
+    render_html(table_html)
 
     # CSV Download using built-in csv and io.StringIO
     csv_buffer = io.StringIO()
@@ -1282,7 +1284,7 @@ with nav_tabs[1]:
         writer.writerows(history)
     csv_content = csv_buffer.getvalue()
 
-    render_clean_html("<div style='height: 0.6rem;'></div>")
+    render_html("<div style='height: 0.6rem;'></div>")
     st.download_button(
         label="📥 Download Performance Report (.csv)",
         data=csv_content,
@@ -1304,7 +1306,7 @@ with nav_tabs[2]:
         st.info("No study notes loaded yet. Paste text or upload a PDF in the 'Revision Studio' tab.")
 
 # --- FOOTER BANNER WITH ADITHYA WATERMARK ---
-render_clean_html("""
+render_html("""
 <div class="adithya-footer-banner">
     <div style="font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; color: #38BDF8;">
         ⚡ Powered by AdithyaInfotech
